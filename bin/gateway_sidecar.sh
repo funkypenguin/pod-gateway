@@ -15,10 +15,9 @@ if [[ -n "$VPN_INTERFACE" ]]; then
   do
     for FOURTH in {0..255}
     do
-    if [[ "$PORT" -gt "65535" ]]
-    then
-      break
-    done    
+    if [[ $PORT -gt 65535 ]]; then
+    break
+    fi
     iptables  -t nat -A PREROUTING -p tcp -i "$VPN_INTERFACE" \
               --dport $PORT  -j DNAT \
               --to-destination "${VXLAN_IP_NETWORK}.${THIRD}.${FOURTH}:${PORT}"
