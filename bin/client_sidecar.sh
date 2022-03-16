@@ -7,7 +7,7 @@ cat /default_config/settings.sh
 cat /config/settings.sh
 . /config/settings.sh
 
-VXLAN_GATEWAY_IP="${VXLAN_IP_NETWORK}.1"
+VXLAN_GATEWAY_IP="${VXLAN_IP_NETWORK}.0.1"
 
 # Loop to test connection to gateway each 10 seconds
 # If connection fails then reset connection

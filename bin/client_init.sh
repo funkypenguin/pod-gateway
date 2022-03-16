@@ -37,7 +37,7 @@ ip route
 # Derived settings
 K8S_DNS_IP="$(cut -d ' ' -f 1 <<< "$K8S_DNS_IPS")"
 GATEWAY_IP="$(dig +short "$GATEWAY_NAME" "@${K8S_DNS_IP}")"
-NAT_ENTRY="$(grep "$(hostname)" /config/nat.conf || true)"
+# NAT_ENTRY="$(grep "$(hostname)" /config/nat.conf || true)"
 VXLAN_GATEWAY_IP="${VXLAN_IP_NETWORK}.1"
 
 # For debugging reasons print some info
@@ -52,38 +52,11 @@ ip link add vxlan0 type vxlan id "$VXLAN_ID" dev eth0 dstport 0 || true
 bridge fdb append to 00:00:00:00:00:00 dst "$GATEWAY_IP" dev vxlan0
 ip link set up dev vxlan0
 
-cat << EOF > /etc/dhclient.conf
-backoff-cutoff 2;
-initial-interval 1;
-link-timeout 10;
-reboot 0;
-retry 10;
-select-timeout 0;
-timeout 30;
-
-interface "vxlan0"
- {
-  request subnet-mask,
-          broadcast-address,
-          routers,
-          #domain-name-servers;
-  require routers,
-          subnet-mask,
-          #domain-name-servers;
- }
-EOF
-
-#Configure IP and default GW though the gateway docker
-if [[ -z "$NAT_ENTRY" ]]; then
-  echo "Get dynamic IP"
-  dhclient -v -cf /etc/dhclient.conf vxlan0
-else
-  IP=$(cut -d' ' -f2 <<< "$NAT_ENTRY")
-  VXLAN_IP="${VXLAN_IP_NETWORK}.${IP}"
-  echo "Use fixed IP $VXLAN_IP"
-  ip addr add "${VXLAN_IP}/24" dev vxlan0
-  route add default gw "$VXLAN_GATEWAY_IP"
-fi
+POD_IP_SUFFIX=$(hostname -i | awk -F. '{ print $3"."$4 }')
+VXLAN_IP="${VXLAN_IP_NETWORK}.${POD_IP_SUFFIX}"
+echo "Use fixed IP $VXLAN_IP"
+ip addr add "${VXLAN_IP}/16" dev vxlan0
+route add default gw "$VXLAN_GATEWAY_IP"
 
 # For debugging reasons print some info
 ip addr

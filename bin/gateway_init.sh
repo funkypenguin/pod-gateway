@@ -15,44 +15,17 @@ if [[ $(cat /proc/sys/net/ipv4/ip_forward) -ne 1 ]]; then
 fi
 
 # Create VXLAN NIC
-VXLAN_GATEWAY_IP="${VXLAN_IP_NETWORK}.1"
+VXLAN_GATEWAY_IP="${VXLAN_IP_NETWORK}.0.1"
 ip link add vxlan0 type vxlan id $VXLAN_ID dev eth0 dstport 0 || true
-ip addr add ${VXLAN_GATEWAY_IP}/24 dev vxlan0 || true
+ip addr add ${VXLAN_GATEWAY_IP}/16 dev vxlan0 || true
 ip link set up dev vxlan0
 
 # Enable outbound NAT
 iptables -t nat -A POSTROUTING -j MASQUERADE
 
+
+
 if [[ -n "$VPN_INTERFACE" ]]; then
-  # Open inbound NAT ports in nat.conf
-  while read -r line; do
-    # Skip lines with comments
-    [[ $line =~ ^#.* ]] && continue
-
-    echo "Processing line: $line"
-    NAME=$(cut -d' ' -f1 <<< "$line")
-    IP=$(cut -d' ' -f2 <<< "$line")
-    PORTS=$(cut -d' ' -f3 <<< "$line")
-
-    # Add NAT entries
-    for port_string in ${PORTS//,/ }; do
-      PORT_TYPE=$(cut -d':' -f1 <<< "$port_string")
-      PORT_NUMBER=$(cut -d':' -f2 <<< "$port_string")
-      echo "IP: $IP , NAME: $NAME , PORT: $PORT_NUMBER , TYPE: $PORT_TYPE"
-
-      iptables  -t nat -A PREROUTING -p "$PORT_TYPE" -i "$VPN_INTERFACE" \
-                --dport "$PORT_NUMBER"  -j DNAT \
-                --to-destination "${VXLAN_IP_NETWORK}.${IP}:${PORT_NUMBER}"
-
-      iptables  -A FORWARD -p "$PORT_TYPE" -d "${VXLAN_IP_NETWORK}.${IP}" \
-                --dport "$PORT_NUMBER" -m state --state NEW,ESTABLISHED,RELATED \
-                -j ACCEPT
-    done
-  done </config/nat.conf
-
-  echo "Setting iptables for VPN with NIC ${VPN_INTERFACE}"
-  # Firewall incomming traffic from VPN
-  echo "Accept traffic alredy ESTABLISHED"
 
   iptables -A FORWARD -i "$VPN_INTERFACE" -m state --state ESTABLISHED,RELATED -j ACCEPT
   # Reject other traffic"

@@ -14,9 +14,7 @@ NOT_ROUTED_TO_GATEWAY_CIDRS=""
 # Vxlan ID to use
 VXLAN_ID="42"
 # VXLAN need an /24 IP range not conflicting with K8S and local IP ranges
-VXLAN_IP_NETWORK="172.16.0"
-# Keep a range of IPs for static assignment in nat.conf
-VXLAN_GATEWAY_FIRST_DYNAMIC_IP=20
+VXLAN_IP_NETWORK="172.16"
 
 # If using a VPN, interface name created by it
 VPN_INTERFACE=tun0
@@ -26,12 +24,3 @@ VPN_BLOCK_OTHER_TRAFFIC=true
 VPN_TRAFFIC_PORT=443
 # Traffic to these IPs will be send through the K8S gateway
 VPN_LOCAL_CIDRS="10.0.0.0/8 192.168.0.0/16"
-
-# DNS queries to these domains will be resolved by K8S DNS instead of
-# the default (typcally the VPN client changes it)
-DNS_LOCAL_CIDRS="local"
-
-# dnsmasq monitors directories. /etc/resolv.conf in a container is in another
-# file system so it does not work. To circumvent this a copy is made using
-# inotifyd
-RESOLV_CONF_COPY=/etc/resolv_copy.conf
