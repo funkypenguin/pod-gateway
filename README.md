@@ -1,3 +1,7 @@
+# ⚠️ Deprecation and Archive Notice
+
+**This repo is being deprecated, please use [the new repo](https://github.com/angelnu/pod-gateway) instead**
+
 # pod-gateway
 
 This container includes scripts used to route traafic from pods through another gateway pod. Typically
